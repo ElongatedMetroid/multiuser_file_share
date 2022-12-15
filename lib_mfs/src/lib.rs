@@ -1,5 +1,5 @@
 use std::{
-    io::{BufReader, Read, Write},
+    io::{Read, Write},
     mem,
     net::TcpStream,
 };
@@ -7,7 +7,7 @@ use std::{
 use serde::{Deserialize, Serialize};
 
 /// Write data to a stream in which a MfsTcpReader can understand
-/// The data will be writen in this format "data_size(8 bytes,)data_bytes}"
+/// The data will be writen in this format "data_size(8 bytes)data_bytes(data_size bytes)}"
 pub struct MfsStreamWriter;
 
 impl MfsStreamWriter {
@@ -36,15 +36,13 @@ impl MfsStreamReader {
     pub fn read<T: Serialize + for<'a> Deserialize<'a>>(
         stream: &mut TcpStream,
     ) -> Result<T, Box<dyn std::error::Error>> {
-        let mut reader = BufReader::new(stream);
-
         let mut data_size_bytes: [u8; 8] = [0; 8];
-        reader.read_exact(&mut data_size_bytes)?;
+        stream.read_exact(&mut data_size_bytes)?;
         let data_size = bincode::deserialize::<u64>(&data_size_bytes)?;
 
         let mut data_bytes = Vec::new();
         data_bytes.resize(data_size as usize, 0);
-        reader.read_exact(&mut data_bytes)?;
+        stream.read_exact(&mut data_bytes)?;
 
         let data = bincode::deserialize::<T>(&data_bytes)?;
 
