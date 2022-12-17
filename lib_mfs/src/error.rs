@@ -1,23 +1,31 @@
 use std::{error, fmt};
 
 #[derive(Debug)]
-pub enum MfsStreamErrorSource {
+pub enum MfsErrorSource {
     DataToBig((u64, u64)),
+    UserAlreadyExists,
+    UserDoesNotExist,
 }
 
 #[derive(Debug)]
-pub struct MfsStreamError {
-    pub source: MfsStreamErrorSource,
+pub struct MfsError {
+    pub source: MfsErrorSource,
 }
 
-impl fmt::Display for MfsStreamError {
+impl fmt::Display for MfsError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "MfsStreamWriterError: {}", match self.source {
-            MfsStreamErrorSource::DataToBig((max_size, attempted_size)) => format!(
+        write!(f, "MfsError: {}", match self.source {
+            MfsErrorSource::DataToBig((max_size, attempted_size)) => format!(
                 "the size of the data that was trying to be writen to the stream was to large: {}>{}", attempted_size, max_size
+            ),
+            MfsErrorSource::UserAlreadyExists => String::from(
+                "the user already exists"
+            ),
+            MfsErrorSource::UserDoesNotExist => String::from(
+                "the user does not exist"
             ),
         })
     }
 }
 
-impl error::Error for MfsStreamError {}
+impl error::Error for MfsError {}
