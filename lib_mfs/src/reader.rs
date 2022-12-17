@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::{io::Read, net::TcpStream};
 
-use crate::error::{MfsStreamError, MfsStreamErrorSource};
+use crate::error::{MfsError, MfsErrorSource};
 
 pub struct MfsStreamReader {
     max_data_size: u64,
@@ -39,8 +39,8 @@ impl MfsStreamReader {
 
         if data_size > self.max_data_size() && !self.break_up_data() {
             return Err(Box::new(
-                MfsStreamError {
-                    source: MfsStreamErrorSource::DataToBig((self.max_data_size(), data_size))
+                MfsError {
+                    source: MfsErrorSource::DataToBig((self.max_data_size(), data_size))
                 }
             ));
         }

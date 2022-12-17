@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::{io::Write, mem, net::TcpStream};
 
-use crate::error::{MfsStreamError, MfsStreamErrorSource};
+use crate::error::{MfsError, MfsErrorSource};
 
 /// Write data to a stream in which a MfsTcpReader can understand
 /// The data will be writen in this format "data_size(8 bytes)data_bytes(data_size bytes)}"
@@ -44,8 +44,8 @@ impl MfsStreamWriter {
 
         // If the size of the data is greater than the max_data_size and breaking up that data if set to false, return an error
         if data_size > self.max_data_size() && !self.break_up_data() {
-            return Err(Box::new(MfsStreamError {
-                source: MfsStreamErrorSource::DataToBig((self.max_data_size(), data_size)),
+            return Err(Box::new(MfsError {
+                source: MfsErrorSource::DataToBig((self.max_data_size(), data_size)),
             }));
         }
 
