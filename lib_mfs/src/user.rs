@@ -1,4 +1,8 @@
-use std::{fs::File, io::{Write, Read}, collections::HashMap};
+use std::{
+    collections::HashMap,
+    fs::File,
+    io::{Read, Write},
+};
 
 use serde_derive::{Deserialize, Serialize};
 
@@ -42,7 +46,9 @@ impl MfsUsers {
     pub fn add_user(&mut self, user: MfsUser) -> Result<(), Box<dyn std::error::Error>> {
         // If the user you tried to add was already there return an error
         if let Some(_) = self.users.insert(user.username, user.password) {
-            return Err(Box::new(MfsError { source: MfsErrorSource::UserAlreadyExists }));
+            return Err(Box::new(MfsError {
+                source: MfsErrorSource::UserAlreadyExists,
+            }));
         }
 
         Ok(())
@@ -53,7 +59,11 @@ impl MfsUsers {
     pub fn correct_password(&mut self, user: &MfsUser) -> Result<bool, Box<dyn std::error::Error>> {
         match self.users.get(&user.username) {
             Some(password) => return Ok(*password == user.password),
-            None => return Err(Box::new(MfsError { source: MfsErrorSource::UserDoesNotExist })),
+            None => {
+                return Err(Box::new(MfsError {
+                    source: MfsErrorSource::UserDoesNotExist,
+                }))
+            }
         }
     }
 }
@@ -67,7 +77,7 @@ impl TryFrom<&str> for MfsUsers {
         let mut users_bytes = Vec::new();
         f.read_to_end(&mut users_bytes)?;
         let users = bincode::deserialize::<MfsUsers>(&users_bytes)?;
-        
+
         Ok(users)
     }
 }

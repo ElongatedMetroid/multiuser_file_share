@@ -1,6 +1,12 @@
-use std::{net::TcpStream, io};
+use std::{
+    fs::File,
+    io::{self, Write},
+    net::TcpStream,
+};
 
-use lib_mfs::{reader::MfsStreamReader, user::MfsUser, writer::MfsStreamWriter, response::MfsResponse};
+use lib_mfs::{
+    reader::MfsStreamReader, response::MfsResponse, user::MfsUser, writer::MfsStreamWriter,
+};
 
 fn main() {
     let stream = TcpStream::connect("127.0.0.1:6969").unwrap();
@@ -38,6 +44,31 @@ fn handle_stream(mut stream: TcpStream) {
     println!("Server says: {:?}", response.message());
 
     loop {
-        
+        // Send the users raw input
+        let mut command = String::new();
+        // Recieve the users raw input
+        println!("Enter a command...");
+        io::stdin().read_line(&mut command).unwrap();
+        // Send the server the users raw input
+        writer.write(&mut stream, &command).unwrap();
+
+        let response = reader.read::<MfsResponse>(&mut stream).unwrap();
+
+        if response.success() {
+            if response.data().is_some() {
+                let mut f = File::create(
+                    response
+                        .message()
+                        .clone()
+                        .unwrap_or(format!("unnamed_from_{}", stream.peer_addr().unwrap())),
+                )
+                .unwrap();
+
+                f.write_all(&response.data().as_ref().unwrap().as_bytes().unwrap())
+                    .unwrap();
+            } else {
+                println!("Server says: {:?}", response.message());
+            }
+        }
     }
 }

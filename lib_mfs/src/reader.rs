@@ -38,11 +38,9 @@ impl MfsStreamReader {
         let data_size = bincode::deserialize::<u64>(&data_size_bytes)?;
 
         if data_size > self.max_data_size() && !self.break_up_data() {
-            return Err(Box::new(
-                MfsError {
-                    source: MfsErrorSource::DataToBig((self.max_data_size(), data_size))
-                }
-            ));
+            return Err(Box::new(MfsError {
+                source: MfsErrorSource::DataToBig((self.max_data_size(), data_size)),
+            }));
         }
 
         let mut data_bytes = Vec::new();
