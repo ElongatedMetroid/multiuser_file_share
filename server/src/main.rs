@@ -4,10 +4,11 @@ use std::{
 };
 
 use lib_mfs::{
+    command::{CommandParser, MfsCommandParser},
     reader::MfsStreamReader,
     response::MfsResponse,
     user::{MfsUser, MfsUsers},
-    writer::MfsStreamWriter, command::{CommandParser, MfsCommandParser},
+    writer::MfsStreamWriter,
 };
 use rayon::ThreadPoolBuilder;
 
@@ -75,6 +76,8 @@ fn handle_client(
         let command = reader.read::<String>(&mut stream).unwrap();
         let command = CommandParser::parse(command.as_str()).unwrap();
 
-        writer.write(&mut stream, &command.execute().unwrap()).unwrap();
+        writer
+            .write(&mut stream, &command.execute().unwrap())
+            .unwrap();
     }
 }

@@ -1,11 +1,8 @@
-use std::{
-    fs::File,
-    io::{self, Write},
-    net::TcpStream,
-};
+use std::{fs::File, io, net::TcpStream};
 
 use lib_mfs::{
-    reader::MfsStreamReader, response::MfsResponse, user::MfsUser, writer::MfsStreamWriter,
+    data::WriteData, reader::MfsStreamReader, response::MfsResponse, user::MfsUser,
+    writer::MfsStreamWriter,
 };
 
 fn main() {
@@ -64,8 +61,7 @@ fn handle_stream(mut stream: TcpStream) {
                 )
                 .unwrap();
 
-                f.write_all(&response.data().as_ref().unwrap().as_bytes().unwrap())
-                    .unwrap();
+                f.write_data(response.data().as_ref().unwrap()).unwrap();
             } else {
                 println!("Server says: {:?}", response.message());
             }

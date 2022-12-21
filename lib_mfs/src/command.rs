@@ -1,6 +1,7 @@
 use crate::{
+    data::Data,
     error::{MfsError, MfsErrorSource},
-    response::MfsResponse, data::Data,
+    response::MfsResponse,
 };
 
 pub trait MfsCommand {
@@ -28,6 +29,7 @@ impl MfsCommand for Bar {
         let mut response = MfsResponse::new();
 
         response.set_data(Some(Data::from("Wow this text is in a file called Bar!")));
+        //response.set_data(Some(Data::from(vec![12, 12, 12, 23])));
         response.set_message(Some(String::from("Bar")));
 
         Ok(response)

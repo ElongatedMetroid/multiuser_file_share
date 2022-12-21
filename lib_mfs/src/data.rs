@@ -1,3 +1,5 @@
+use std::fs::File;
+
 use serde_derive::{Deserialize, Serialize};
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Hash, Serialize, Deserialize)]
@@ -14,15 +16,22 @@ pub enum Data {
     Blob(Vec<u8>),
 }
 
-impl Data {
-    pub fn as_bytes(&self) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
-        match self {
-            Data::String(s) => Ok(bincode::serialize(s)?),
-            Data::Char(c) => Ok(bincode::serialize(c)?),
-            Data::Int(i) => Ok(bincode::serialize(i)?),
-            Data::Bool(b) => Ok(bincode::serialize(b)?),
-            Data::Blob(b) => Ok(b.clone()),
+pub trait WriteData {
+    fn write_data(&mut self, data: &Data) -> Result<(), Box<dyn std::error::Error>>;
+}
+
+impl WriteData for File {
+    fn write_data(&mut self, data: &Data) -> Result<(), Box<dyn std::error::Error>> {
+        use std::io::Write;
+        match data {
+            Data::String(value) => write!(self, "{}", value)?,
+            Data::Char(value) => write!(self, "{}", value)?,
+            Data::Int(value) => write!(self, "{}", value)?,
+            Data::Bool(value) => write!(self, "{}", value)?,
+            Data::Blob(value) => self.write_all(&value)?,
         }
+
+        Ok(())
     }
 }
 
