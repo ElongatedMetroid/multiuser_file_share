@@ -65,6 +65,12 @@ fn handle_stream(mut stream: TcpStream) {
             } else {
                 println!("Server says: {:?}", response.message());
             }
+        } else {
+            println!("Server Error: {:?}", response.message());
+            if response.fatal() {
+                eprintln!("Fatal Error: Killing Client");
+                return;
+            }
         }
     }
 }

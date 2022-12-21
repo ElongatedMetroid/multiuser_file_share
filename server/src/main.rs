@@ -15,8 +15,8 @@ use rayon::ThreadPoolBuilder;
 fn main() {
     let listener = TcpListener::bind("127.0.0.1:6969").unwrap();
     let pool = ThreadPoolBuilder::new().num_threads(8).build().unwrap();
-    let max_data_size = 1000;
-    let break_up_data = true;
+    let max_data_size = 2000;
+    let break_up_data = false;
     let users = Arc::new(Mutex::new(MfsUsers::new("users")));
     users
         .lock()
@@ -72,12 +72,38 @@ fn handle_client(
     }
 
     loop {
-        // Read the users raw command
-        let command = reader.read::<String>(&mut stream).unwrap();
-        let command = CommandParser::parse(command.as_str()).unwrap();
+        let mut response = MfsResponse::new();
 
-        writer
-            .write(&mut stream, &command.execute().unwrap())
-            .unwrap();
+        // Read the users raw command
+        match reader.read::<String>(&mut stream) {
+            Ok(command) => {
+                match CommandParser::parse(command.as_str()) {
+                    Ok(command) => {
+                        match command.execute() {
+                            Ok(command_response) => {
+                                response = command_response;
+                            },
+                            Err(error) => {
+                                response.set_failure_with_message(Some(error.to_string()));
+                            },
+                        };
+                    },
+                    Err(error) => {
+                        response.set_failure_with_message(Some(error.to_string()));
+                    },
+                };
+            },
+            Err(error) => {
+                response.set_failure_with_message(Some(error.to_string()));
+            },
+        }
+        
+        match writer.write(&mut stream, &response) {
+            Ok(_) => (),
+            Err(error) => {
+                eprintln!("({error}) write to client `{:?}` failed, killing ...", stream.peer_addr());
+                return;
+            },
+        }
     }
 }

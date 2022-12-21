@@ -5,6 +5,7 @@ use crate::data::Data;
 #[derive(Debug, Serialize, Deserialize)]
 pub struct MfsResponse {
     success: bool,
+    fatal: bool,
     /// Will be printed if data is none, otherwise it will be the filename of data
     message: Option<String>,
     /// Will be written to a file with the name message
@@ -15,6 +16,7 @@ impl MfsResponse {
     pub fn new() -> Self {
         Self {
             success: true,
+            fatal: false,
             message: None,
             data: None,
         }
@@ -25,8 +27,18 @@ impl MfsResponse {
     pub fn set_success(&mut self) {
         self.success = true;
     }
+    pub fn set_failure_with_message(&mut self, msg: Option<String>) {
+        self.success = false;
+        self.set_message(msg);
+    }
     pub fn set_failure(&mut self) {
         self.success = false;
+    }
+    pub fn fatal(&self) -> bool {
+        self.fatal
+    }
+    pub fn set_fatal(&mut self, new: bool) {
+        self.fatal = new;
     }
     pub fn message(&self) -> &Option<String> {
         &self.message
