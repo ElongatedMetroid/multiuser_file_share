@@ -41,31 +41,42 @@ fn handle_client(
     let reader = MfsStreamReader::new(max_data_size, break_up_data);
 
     // Write the max_data_size
-    writer.write(&mut stream, &reader.max_data_size()).unwrap();
+    if let Err(error) = writer.write(&mut stream, &reader.max_data_size()) {
+        eprintln!("({error}) write to client `{:?}` failed, killing ...", stream.peer_addr());
+        return;
+    }
     // Write the break_up_data
-    writer.write(&mut stream, &reader.break_up_data()).unwrap();
-
-    // get login info
-    let user = reader.read::<MfsUser>(&mut stream).unwrap();
-
-    dbg!(&user);
+    if let Err(error) = writer.write(&mut stream, &reader.break_up_data()) {
+        eprintln!("({error}) write to client `{:?}` failed, killing ...", stream.peer_addr());
+        return;
+    }
 
     let mut response = MfsResponse::new();
     response.set_message(Some(String::from("Welcome")));
-    match users.lock().unwrap().correct_password(&user) {
-        Ok(b) => {
-            if !b {
-                response.set_failure();
-                response.set_message(Some(String::from("password does not match")));
+
+    // get login info
+    match reader.read::<MfsUser>(&mut stream) {
+        Ok(user) => {
+            match users.lock().unwrap().correct_password(&user) {
+                Ok(b) => {
+                    if !b {
+                        response.set_failure_with_message(Some(String::from("password does not match")));
+                    }
+                }
+                Err(error) => {
+                    response.set_failure_with_message(Some(error.to_string()));
+                }
             }
-        }
+        },
         Err(error) => {
-            response.set_failure();
-            response.set_message(Some(error.to_string()))
+            response.set_failure_with_message(Some(error.to_string()));
         }
     }
 
-    writer.write(&mut stream, &response).unwrap();
+    if let Err(error) = writer.write(&mut stream, &response) {
+        eprintln!("({error}) write to client `{:?}` failed, killing ...", stream.peer_addr());
+        return;
+    }
 
     if !response.success() {
         return;
@@ -98,12 +109,9 @@ fn handle_client(
             },
         }
         
-        match writer.write(&mut stream, &response) {
-            Ok(_) => (),
-            Err(error) => {
-                eprintln!("({error}) write to client `{:?}` failed, killing ...", stream.peer_addr());
-                return;
-            },
+        if let Err(error) = writer.write(&mut stream, &response) {
+            eprintln!("({error}) write to client `{:?}` failed, killing ...", stream.peer_addr());
+            return;
         }
     }
 }
