@@ -8,3 +8,6 @@ edition = "2021"
 [dependencies]
 lib_mfs = { path = "../lib_mfs" }
 rayon = "1.6.1"
+serde = "1.0.152"
+serde_derive = "1.0.152"
+toml = "0.5.10"

@@ -6,7 +6,7 @@ use lib_mfs::{
 };
 
 fn main() {
-    let stream = TcpStream::connect("127.0.0.1:6969").unwrap();
+    let stream = TcpStream::connect("127.0.0.1:1234").unwrap();
 
     handle_stream(stream);
 }

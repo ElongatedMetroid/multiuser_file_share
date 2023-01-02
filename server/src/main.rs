@@ -11,13 +11,15 @@ use lib_mfs::{
     writer::MfsStreamWriter,
 };
 use rayon::ThreadPoolBuilder;
+use server::config::Config;
 
 fn main() {
-    let listener = TcpListener::bind("127.0.0.1:6969").unwrap();
-    let pool = ThreadPoolBuilder::new().num_threads(8).build().unwrap();
-    let max_data_size = 2000;
-    let break_up_data = false;
-    let users = Arc::new(Mutex::new(MfsUsers::new("users")));
+    let config = Config::load("server.conf").unwrap();
+
+    let listener = TcpListener::bind(config.addr()).unwrap();
+    let pool = ThreadPoolBuilder::new().num_threads(config.threads()).build().unwrap();
+
+    let users = Arc::new(Mutex::new(MfsUsers::new(config.user_data_filename())));
     users
         .lock()
         .unwrap()
@@ -27,18 +29,17 @@ fn main() {
     for stream in listener.incoming() {
         let stream = stream.unwrap();
 
-        pool.install(|| handle_client(stream, Arc::clone(&users), max_data_size, break_up_data));
+        pool.install(|| handle_client(stream, Arc::clone(&users), &config));
     }
 }
 
 fn handle_client(
     mut stream: TcpStream,
     users: Arc<Mutex<MfsUsers>>,
-    max_data_size: u64,
-    break_up_data: bool,
+    config: &Config,
 ) {
-    let writer = MfsStreamWriter::new(max_data_size, break_up_data);
-    let reader = MfsStreamReader::new(max_data_size, break_up_data);
+    let writer = MfsStreamWriter::new(config.max_data_size(), config.break_up_data());
+    let reader = MfsStreamReader::new(config.max_data_size(), config.break_up_data());
 
     // Write the max_data_size
     if let Err(error) = writer.write(&mut stream, &reader.max_data_size()) {
